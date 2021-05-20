@@ -127,12 +127,20 @@ rev([H|T],RevTH):-
     rev(T,RevT),
     append(RevT,[H],RevTH).
 
+
+% rev2 (library, example of accumulator pattern, also define helper rule
+% (always okay)
+rev2(L,R):-rev2Helper( L, [], R).
+
+rev2Helper([],Rev,Rev).
+rev2Helper([H|T], RevBegin, Rev) :- 
+    rev2Helper(T,[H|RevBegin],Rev).
+
 is_palindrome(L):-reverse(L,L).
 
 
 
-% rev2 (library, example of accumulator pattern, also define helper rule
-% (always okay)
+
 
 
 %subset -- multiple cases
@@ -140,35 +148,61 @@ subset([],[]).
 subset([H|R],[H|S]):- subset(R,S).
 subset([_|R],S):- subset(R,S).
 
-%disjoint
+%permutation
+perm([],[]).
+perm([H|T],PHT):-
+    perm(T,PT),
+    append(A,B,PT),
+    append(A,[H|B],PHT).
+
+%disjoint using member, NO RECURSION (explicitly)
+disjoint(A,B):- \+ (member(M,A),member(M,B) ).
 
 
-%disjoint2 using member, NO RECURSION (explicitly)
-
+%disjoint2 
+disjoint2([],_).
+disjoint2([H|T],B):-
+    \+ append(_,[H|_],B),  % this is really member
+    disjoint2(T,B).
 
 %intersects
+intersects(A,B):- \+disjoint(A,B).
 
 
 %max rule
+max(X,Y,M):-X>Y ,M is X.
+max(X,Y,M):-X=<Y,M is Y.
 
 %max of LIST
 %maxL(L,Max)
+maxL([H],H).
+maxL([H|T],Max):-
+    maxL(T,MaxT),
+    max(H,MaxT,Max).
 
 
-%list_evil
+%list_evil 
+list_evil([e,v,i,l|_]).
+list_evil([_|T]):-list_evil(T).
 
 %call following line:
 % set_prolog_flag(answer_write_options,[max_depth(0)]).
 
 
-%take
-
-
+%take Pre is length N prefix of L
+take(0,_,[]).
+take(N,[H|T],[H|PreT]):-
+    Nm1 is N-1,
+    take(Nm1,T,PreT).
 
 %drop
+drop(0,L,L).
+drop(N,[_|T], Drop ):-
+    Nm1 is N-1,
+    drop(Nm1,T,Drop).
 
 
-% split less efficient with take and drop
+
 
 
 % more efficient version (take, in particular, computes and then
@@ -177,10 +211,48 @@ subset([_|R],S):- subset(R,S).
 %note use of helper predicate, below
 %split
 
+% split less efficient with take and drop
+splitInefficient(List,L,R):-
+    length(List,Len),
+    Half is Len//2,
+    take(Half,List,L),
+    drop(Half,List,R).
+
+splitN(0,List,[],List).
+splitN(N,[H|T],[H|LS],R):-
+    Nm1 is N-1,
+    splitN(Nm1,T,LS,R).
+
+split(List,L,R):-
+    length(List,Len),
+    Half is Len//2,
+    splitN(Half,List,L,R).
 
 
-%merge_lists
-
+%merge_lists -- input lists are sorted
+merge_lists([],L,L).
+merge_lists(L,[],L).
+merge_lists([G|S],[H|T],[G|M] ):-
+    G =< H,
+    merge_lists(S,[H|T],M).
+merge_lists([G|S],[H|T],[H|M] ):-
+    G > H,
+    merge_lists([G|S],T,M).
 
 %what happens if I do <, >= (sort NOT stable - 350)
+mergesort([],[]).
+mergesort([X],[X]).
+mergesort(Unsorted,Sorted):-
+    len2orMore(Unsorted),
+    split(Unsorted,L,R),
+    mergesort(L,SL),
+    mergesort(R,SR),
+    merge_lists(SL,SR,Sorted).
 
+len2orMore( [_,_|_] ).
+
+index(0,[H|T],H).
+index(N,[_|T],Item):-
+    N>0,
+    Nm1 is N -1,
+    index(Nm1,T,Item).
