@@ -8,6 +8,7 @@ swap (x,y) = (y,x)
 
 pair x y = (x,y)
 
+double :: Num a => a -> a
 double x = x*2
 
 palindrome xs = reverse xs == xs
